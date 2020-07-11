@@ -1,7 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { Observable, Subject, merge } from "rxjs";
 import { HttpClient } from "@angular/common/http";
-import { map, switchMap } from "rxjs/operators";
+import { map, switchMap, share } from "rxjs/operators";
 
 @Component({
   selector: "app-root",
@@ -21,9 +21,9 @@ export class AppComponent implements OnInit {
   constructor(private httpClient: HttpClient) {}
 
   ngOnInit(): void {
-    this.users$ = this.httpClient.get(
-      "https://jsonplaceholder.typicode.com/users"
-    );
+    this.users$ = this.httpClient
+      .get("https://jsonplaceholder.typicode.com/users")
+      .pipe(share());
     this.activeUser$ = merge(
       this.selectedUser$,
       this.users$.pipe(map(x => x[0]))
@@ -37,10 +37,13 @@ export class AppComponent implements OnInit {
     );
     this.todos$ = this.activeUser$.pipe(
       switchMap(x =>
-        httpClient.get(
+        this.httpClient.get(
           `https://jsonplaceholder.typicode.com/todos?userId=${x.id}`
         )
       )
     );
+  }
+  public onUserClick(user: any): void {
+    this.selectedUser$.next(user);
   }
 }
